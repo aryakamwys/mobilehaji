@@ -1,13 +1,6 @@
 # haji
 
-Voucher top-up Umroh & Haji dengan cashback MLM berjenjang.
-Backend: ASP.NET Core (.NET 10) + PostgreSQL + pembayaran Midtrans Snap. Aplikasi: Flutter (`VoucherUmrohHaji/mobile/`).
-
-## Struktur
-
-- `VoucherUmrohHaji/service/` — API
-- `VoucherUmrohHaji/mobile/` — aplikasi Flutter
-- `docs/` — spec & rencana implementasi
+Voucher top-up Umroh & Haji dengan cashback dan point
 
 ## Endpoint
 
@@ -38,18 +31,4 @@ Autentikasi: JWT Bearer (`Authorization: Bearer <token>`). Endpoint admin butuh 
 
 ## Menjalankan (dev)
 
-```bash
-# Postgres
-docker run --name haji-pg -e POSTGRES_PASSWORD=haji -e POSTGRES_DB=voucher -p 5432:5432 -d postgres:17
-
-# API
-cd VoucherUmrohHaji/service
-dotnet user-secrets set "AdminUser:Password" "..."
-dotnet user-secrets set "Jwt:Key" "..."
-dotnet user-secrets set "Midtrans:ServerKey" "SB-Mid-server-..."
-dotnet run
-
-# Flutter
-cd VoucherUmrohHaji/mobile
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5080
-```
+ntar dibikin
