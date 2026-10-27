@@ -8,10 +8,11 @@ namespace VoucherUmrohHaji.Service.Features.Referrals;
 /// <summary>Pencarian kode referral dan pengikatan upline (dipakai register dan Task 6).</summary>
 public class ReferralService(AppDbContext db)
 {
+    /// <summary>Hanya buyer yang boleh jadi upline — kode admin tidak dapat diikat (rujukan Store.swift register/bindReferral).</summary>
     public Task<Member?> FindByCodeAsync(string code)
     {
         var normalized = code.Trim().ToUpperInvariant();
-        return db.Members.SingleOrDefaultAsync(m => m.ReferralCode.ToUpper() == normalized);
+        return db.Members.SingleOrDefaultAsync(m => m.Role == "buyer" && m.ReferralCode.ToUpper() == normalized);
     }
 
     public async Task BindUplineAsync(Member child, string referralCode)

@@ -28,7 +28,7 @@ public class TokenService(AppDbContext db, IConfiguration configuration)
         return (CreateAccessToken(member), refreshToken, AccessTokenLifetimeSeconds);
     }
 
-    public async Task<(string accessToken, string refreshToken)> RefreshAsync(string refreshToken)
+    public async Task<(string accessToken, string refreshToken, Member member)> RefreshAsync(string refreshToken)
     {
         var stored = await db.RefreshTokens.SingleOrDefaultAsync(t => t.TokenHash == Hash(refreshToken));
         if (stored is null || stored.Revoked || stored.ExpiresAt <= DateTime.UtcNow)
@@ -38,7 +38,7 @@ public class TokenService(AppDbContext db, IConfiguration configuration)
         var member = await db.Members.FindAsync(stored.MemberId)
             ?? throw new DomainException("Refresh token tidak valid atau kedaluwarsa");
         var (access, rotated, _) = await IssueAsync(member);
-        return (access, rotated);
+        return (access, rotated, member);
     }
 
     public async Task RevokeAsync(string refreshToken)
