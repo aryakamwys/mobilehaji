@@ -23,7 +23,7 @@
 
 ## Konvensi kode yang dipakai semua task
 
-- Exception domain: `Common/DomainException.cs` — `public class DomainException(string message) : Exception(message);` ditangani `Common/DomainExceptionHandler.cs` (IExceptionHandler .NET 8+) → 400 `{ "error": message }`. Registrasi di Program.cs: `builder.Services.AddExceptionHandler<DomainExceptionHandler>(); app.UseExceptionHandler();`
+- Exception domain: `Common/DomainException.cs` — `public class DomainException(string message) : Exception(message);` ditangani `Common/DomainExceptionHandler.cs` (IExceptionHandler .NET 8+) → 400 `{ "error": message }`. Registrasi di Program.cs: `builder.Services.AddExceptionHandler<DomainExceptionHandler>(); builder.Services.AddProblemDetails(); app.UseExceptionHandler();` — `AddProblemDetails()` WAJIB: `UseExceptionHandler()` tanpa `IProblemDetailsService` terdaftar melempar `InvalidOperationException` saat startup di .NET 8+.
 - Struktur endpoint: `Features/<Nama>/<Nama>Endpoints.cs` dengan `public static class XEndpoints { public static void MapXEndpoints(this IEndpointRouteBuilder app) }`, dipanggil `app.MapAuthEndpoints()` dst dari Program.cs.
 - DTO request/response: record di file yang sama dengan endpoints-nya.
 - Autentikasi endpoint: `.RequireAuthorization()` dan untuk admin `.RequireAuthorization(p => p.RequireRole("admin"))`.
