@@ -100,7 +100,6 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
             contentPadding: EdgeInsets.zero,
             leading: Icon(Icons.verified, color: Colors.green[700]),
             title: const Text('Akun terhubung dengan upline'),
-            subtitle: Text('Upline: ${store.uplineName ?? '-'}'),
           ),
         const Divider(height: 28),
         Text('Persentase MLM',

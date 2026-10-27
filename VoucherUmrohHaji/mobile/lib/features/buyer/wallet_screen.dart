@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/rupiah.dart';
+import '../../core/string_ext.dart';
 import '../../core/tanggal.dart';
 import '../../core/widgets/balance_card.dart';
 import '../../providers/store_provider.dart';
@@ -69,7 +70,7 @@ class WalletScreen extends ConsumerWidget {
                   child: Row(children: [
                     Text(o.id, style: Theme.of(context).textTheme.bodySmall),
                     const Spacer(),
-                    Text(o.status.toUpperCase(),
+                    Text(o.status.kapital,
                         style: Theme.of(context)
                             .textTheme
                             .labelSmall

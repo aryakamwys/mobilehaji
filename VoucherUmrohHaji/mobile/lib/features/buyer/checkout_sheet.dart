@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/rupiah.dart';
+import '../../core/string_ext.dart';
 import '../../core/widgets/labeled_row.dart';
 import '../../models/models.dart';
 import '../../providers/store_provider.dart';
@@ -88,9 +89,20 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Checkout',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Text('Checkout',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Tutup')),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
             Text('Detail Checkout',
                 style: Theme.of(context).textTheme.labelLarge),
@@ -101,11 +113,14 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                     color: Colors.green[700], fontWeight: FontWeight.w700)),
             const Divider(height: 28),
             if (bolehReferral) ...[
+              Text('Kode referral (opsional)',
+                  style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _referral,
                 textCapitalization: TextCapitalization.characters,
                 decoration: const InputDecoration(
-                    labelText: 'Kode referral (opsional)',
+                    hintText: 'Kode referral upline',
                     border: OutlineInputBorder()),
               ),
               const SizedBox(height: 16),
@@ -117,9 +132,9 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                 label: const Text('Buat Order'),
               )
             else ...[
+              Text('Order', style: Theme.of(context).textTheme.labelLarge),
               LabeledRow('Nomor', _order!.id),
-              LabeledRow('Status',
-                  _order!.status.capitalize), // pending saat baru dibuat
+              LabeledRow('Status', _order!.status.kapital),
               const SizedBox(height: 8),
               FilledButton.icon(
                 style: FilledButton.styleFrom(
@@ -154,9 +169,4 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
       ),
     );
   }
-}
-
-extension on String {
-  String get capitalize =>
-      isEmpty ? this : '${this[0].toUpperCase()}${substring(1)}';
 }
