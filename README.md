@@ -20,7 +20,7 @@ Voucher top-up Umroh & Haji dengan cashback dan point
 | POST | `/api/referral/bind` | Hubungkan upline |
 | POST | `/api/withdrawals` | Ajukan penarikan (saldo di-hold) |
 | GET | `/api/withdrawals` | Riwayat penarikan |
-| POST/PUT/DELETE | `/api/admin/vouchers` (PUT/DELETE `/{id}`) | Buat/ubah/hapus voucher (admin) |
+| GET/POST/PUT/DELETE | `/api/admin/vouchers` (PUT/DELETE `/{id}`) | CRUD voucher (admin); GET mengembalikan semua voucher termasuk nonaktif (katalog buyer: `GET /api/vouchers`, aktif saja) |
 | GET | `/api/admin/withdrawals` | Semua pengajuan withdraw (admin) |
 | POST | `/api/admin/withdrawals/{id}/approve` / `reject` | Approval withdraw (admin) |
 | GET | `/api/admin/members` | Daftar anggota (admin) |

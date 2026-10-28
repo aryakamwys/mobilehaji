@@ -41,6 +41,33 @@ public class VoucherTests(TestApiFactory factory) : IClassFixture<TestApiFactory
     }
 
     [Fact]
+    public async Task Admin_melihat_semua_voucher_buyer_403()
+    {
+        var admin = factory.CreateClient();
+        await LoginAdminAsync(admin);
+        var aktif = await (await admin.PostAsJsonAsync("/api/admin/vouchers",
+            new { title = "Voucher Admin Aktif", price = 30_000L, value = 33_000L })).Content.ReadFromJsonAsync<VoucherDto>();
+        var nonaktif = await (await admin.PostAsJsonAsync("/api/admin/vouchers",
+            new { title = "Voucher Admin Nonaktif", price = 40_000L, value = 44_000L })).Content.ReadFromJsonAsync<VoucherDto>();
+        var put = await admin.PutAsJsonAsync($"/api/admin/vouchers/{nonaktif!.Id}",
+            new { title = "Voucher Admin Nonaktif", price = 40_000L, value = 44_000L, isActive = false });
+        Assert.True(put.IsSuccessStatusCode, await put.Content.ReadAsStringAsync());
+
+        var semua = await admin.GetFromJsonAsync<List<VoucherDto>>("/api/admin/vouchers");
+        Assert.NotNull(semua);
+        Assert.Contains(semua!, v => v.Id == aktif!.Id && v.IsActive);
+        Assert.Contains(semua!, v => v.Id == nonaktif.Id && !v.IsActive); // nonaktif ikut untuk layar admin
+        Assert.Equal(semua!.Select(v => v.Title), semua.Select(v => v.Title).OrderBy(t => t)); // urut Title
+
+        var buyer = factory.CreateClient();
+        var reg = await buyer.PostAsJsonAsync("/api/auth/register",
+            new { name = "Buyer AdminGet", email = "buyer.adminget@test.id", password = "Rahasia123" });
+        var buyerAuth = await reg.Content.ReadFromJsonAsync<AuthResponse>();
+        buyer.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", buyerAuth!.AccessToken);
+        Assert.Equal(HttpStatusCode.Forbidden, (await buyer.GetAsync("/api/admin/vouchers")).StatusCode);
+    }
+
+    [Fact]
     public async Task Nonadmin_CRUD_403()
     {
         var anon = factory.CreateClient();

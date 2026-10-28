@@ -19,6 +19,15 @@ public static class VoucherEndpoints
                 .ToListAsync())
             .RequireAuthorization().WithTags("Vouchers").WithSummary("Daftar voucher aktif");
 
+        // Katalog admin: SEMUA voucher (aktif + nonaktif), urut Title — layar admin Flutter
+        // butuh daftar lengkap untuk mengelola nonaktif; katalog buyer tetap GET /api/vouchers.
+        app.MapGet("/api/admin/vouchers", async (AppDbContext db) =>
+            await db.Vouchers.AsNoTracking().OrderBy(v => v.Title)
+                .Select(v => new VoucherDto(v.Id, v.Title, v.Price, v.Value, v.IsActive))
+                .ToListAsync())
+            .RequireAuthorization(p => p.RequireRole("admin"))
+            .WithTags("Admin").WithSummary("Daftar semua voucher (admin)");
+
         app.MapPost("/api/admin/vouchers", async (CreateVoucherRequest req, AppDbContext db) =>
         {
             Validate(req.Title, req.Price, req.Value);
