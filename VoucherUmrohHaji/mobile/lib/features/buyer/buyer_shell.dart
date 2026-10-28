@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../providers/store_provider.dart';
+import '../../providers/auth_provider.dart';
 import 'referral_screen.dart';
 import 'shop_screen.dart';
 import 'wallet_screen.dart';
@@ -20,7 +20,7 @@ class _BuyerShellState extends ConsumerState<BuyerShell> {
 
   @override
   Widget build(BuildContext context) {
-    final member = ref.watch(storeProvider).current;
+    final member = ref.watch(authProvider).value;
     final layar = [
       const ShopScreen(),
       const WalletScreen(),
@@ -34,11 +34,13 @@ class _BuyerShellState extends ConsumerState<BuyerShell> {
         actions: [
           PopupMenuButton<String>(
             onSelected: (v) {
-              if (v == 'keluar') ref.read(storeProvider.notifier).logout();
+              if (v == 'keluar') {
+                ref.read(authProvider.notifier).logout();
+              }
             },
             itemBuilder: (_) => [
               PopupMenuItem(
-                  enabled: false, child: Text('Masuk sebagai ${member.name}')),
+                  enabled: false, child: Text('Masuk sebagai ${member?.name ?? '-'}')),
               const PopupMenuDivider(),
               const PopupMenuItem(
                   value: 'keluar',

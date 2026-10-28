@@ -1,11 +1,15 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/api_client.dart';
 import '../../core/rupiah.dart';
 import '../../core/string_ext.dart';
 import '../../core/widgets/labeled_row.dart';
 import '../../models/models.dart';
-import '../../providers/store_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/data_providers.dart';
 
 /// Membuka modal checkout untuk voucher terpilih.
 void bukaCheckout(BuildContext context, Voucher voucher) {
@@ -28,7 +32,11 @@ class CheckoutSheet extends ConsumerStatefulWidget {
 class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   final _referral = TextEditingController();
   Order? _order;
+  bool _membuat = false;
   bool _membayar = false;
+
+  static const _maxPoll = 10;
+  static const _jarakPoll = Duration(seconds: 3);
 
   @override
   void dispose() {
@@ -36,50 +44,93 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
     super.dispose();
   }
 
-  void _pesan(String msg) =>
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  void _pesan(String msg, {Color? warna}) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(msg, style: const TextStyle(color: Colors.white)),
+          backgroundColor: warna));
 
-  void _buatOrder() {
+  Future<void> _buatOrder() async {
+    setState(() => _membuat = true);
     try {
-      final order = ref
-          .read(storeProvider.notifier)
-          .createOrder(widget.voucher, referral: _referral.text);
-      setState(() => _order = order);
-    } catch (e) {
-      _pesan(e.toString());
+      final kode = _referral.text.trim();
+      if (kode.isNotEmpty) {
+        // Referral wajib diikat DULU — kalau gagal, order tidak dibuat.
+        await bindReferral(kode);
+        ref.read(authProvider.notifier).tandaiUplineTerikat();
+      }
+      final order = await buatOrder(widget.voucher);
+      ref.invalidate(myOrdersProvider);
+      if (mounted) setState(() => _order = order);
+    } on DioException catch (e) {
+      if (mounted) _pesan(pesanError(e));
+    } finally {
+      if (mounted) setState(() => _membuat = false);
     }
   }
 
-  /// Fase dummy: meniru pembayaran Midtrans. Produksi: buka snapUrl dari
-  /// POST /api/orders lalu poll GET /api/orders/{id}/status.
   Future<void> _bayar() async {
     setState(() => _membayar = true);
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
+    final url = Uri.parse(_order!.snapUrl ?? '');
     try {
-      ref.read(storeProvider.notifier).payOrder(_order!.id);
-      _pesan('Pembayaran berhasil, saldo masuk');
-      Navigator.of(context).pop();
-    } catch (e) {
-      _pesan(e.toString());
-    } finally {
-      if (mounted) setState(() => _membayar = false);
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } on Exception {
+      if (mounted) _pesan('Tidak dapat membuka halaman pembayaran Midtrans');
+    }
+    for (var i = 0; i < _maxPoll; i++) {
+      await Future.delayed(_jarakPoll);
+      if (!mounted) return;
+      final status = await _cekStatus(); // null = gagal cek, lanjut poll
+      if (status == null) continue;
+      if (status == 'settlement') {
+        _refreshSemua();
+        _pesan('Pembayaran berhasil, saldo masuk', warna: Colors.green[700]);
+        if (mounted) Navigator.of(context).pop();
+        return;
+      }
+      if (status == 'cancel' || status == 'expire') {
+        _refreshSemua();
+        _pesan(status == 'cancel'
+            ? 'Order dibatalkan'
+            : 'Order kedaluwarsa, silakan buat order baru');
+        if (mounted) Navigator.of(context).pop();
+        return;
+      }
+    }
+    if (mounted) {
+      _refreshSemua();
+      _pesan('Status pembayaran belum berubah — cek tab Dompet nanti');
     }
   }
 
-  void _batalkan() {
+  Future<String?> _cekStatus() async {
     try {
-      ref.read(storeProvider.notifier).cancelOrder(_order!.id);
-      Navigator.of(context).pop();
-    } catch (e) {
-      _pesan(e.toString());
+      return await statusOrder(_order!.id);
+    } on Exception {
+      return null; // jaringan sempat gagal → coba poll berikutnya
+    }
+  }
+
+  void _refreshSemua() {
+    ref.invalidate(walletProvider);
+    ref.invalidate(vouchersProvider);
+    ref.invalidate(myOrdersProvider);
+    ref.invalidate(referralMeProvider);
+  }
+
+  Future<void> _batalkan() async {
+    try {
+      await batalkanOrder(_order!.id);
+      _refreshSemua();
+      if (mounted) Navigator.of(context).pop();
+    } on DioException catch (e) {
+      if (mounted) _pesan(pesanError(e));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final store = ref.watch(storeProvider);
-    final bolehReferral = store.current.parentId == null && _order == null;
+    final member = ref.watch(authProvider).value;
+    final bolehReferral = (member?.parentId == null) && _order == null;
     return Padding(
       padding:
           EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -127,9 +178,14 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             ],
             if (_order == null)
               FilledButton.icon(
-                onPressed: _buatOrder,
-                icon: const Icon(Icons.credit_card),
-                label: const Text('Buat Order'),
+                onPressed: _membuat ? null : _buatOrder,
+                icon: _membuat
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.credit_card),
+                label: Text(_membuat ? 'Membuat order…' : 'Buat Order'),
               )
             else ...[
               Text('Order', style: Theme.of(context).textTheme.labelLarge),
@@ -147,7 +203,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.payment),
                 label: Text(_membayar
-                    ? 'Memproses pembayaran…'
+                    ? 'Memeriksa pembayaran…'
                     : 'Bayar dengan Midtrans'),
               ),
               const SizedBox(height: 8),

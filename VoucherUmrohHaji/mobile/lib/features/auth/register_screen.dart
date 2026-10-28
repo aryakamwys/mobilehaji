@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../providers/store_provider.dart';
-import '../buyer/buyer_shell.dart';
+import '../../core/api_client.dart';
+import '../../providers/auth_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -31,18 +31,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
     setState(() => _busy = true);
-    await Future.delayed(const Duration(milliseconds: 400));
     try {
-      ref.read(storeProvider.notifier).register(
+      await ref.read(authProvider.notifier).register(
           _name.text, _email.text, _password.text, _referral.text);
-      if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const BuyerShell()),
-          (_) => false);
+      // Navigasi terjadi otomatis via _Gerbang saat state auth berubah.
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
+            .showSnackBar(SnackBar(content: Text(pesanError(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

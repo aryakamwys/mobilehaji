@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/api_client.dart';
 import '../../core/rupiah.dart';
 import '../../core/widgets/balance_card.dart';
 import '../../core/widgets/labeled_row.dart';
 import '../../models/models.dart';
-import '../../providers/store_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/data_providers.dart';
 import 'checkout_sheet.dart';
 
 class ShopScreen extends ConsumerWidget {
@@ -13,14 +15,14 @@ class ShopScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final store = ref.watch(storeProvider);
-    final vouchers = store.activeVouchers;
+    final member = ref.watch(authProvider).value;
+    final vouchers = ref.watch(vouchersProvider);
     return RefreshIndicator(
-      onRefresh: () async => await Future.delayed(const Duration(milliseconds: 300)),
+      onRefresh: () async => ref.refresh(vouchersProvider.future),
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          BalanceCard(title: 'Saldo aktif', amount: store.current.balance),
+          BalanceCard(title: 'Saldo aktif', amount: member?.balance ?? 0),
           const SizedBox(height: 8),
           Text(
             'Saldo dan cashback dikreditkan otomatis setelah pembayaran Midtrans berhasil.',
@@ -36,21 +38,45 @@ class ShopScreen extends ConsumerWidget {
           Text('Pilih voucher untuk membeli dan membayar via Midtrans.',
               style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 12),
-          if (vouchers.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
+          vouchers.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
               child: Column(children: [
-                Icon(Icons.card_giftcard_outlined,
-                    size: 48, color: Theme.of(context).disabledColor),
+                Text(pesanError(e),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium),
                 const SizedBox(height: 8),
-                const Text('Belum ada voucher aktif'),
+                FilledButton.tonal(
+                    onPressed: () => ref.invalidate(vouchersProvider),
+                    child: const Text('Coba Lagi')),
               ]),
-            )
-          else
-            ...vouchers.map((v) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _VoucherCard(voucher: v),
-                )),
+            ),
+            data: (daftar) {
+              if (daftar.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  child: Column(children: [
+                    Icon(Icons.card_giftcard_outlined,
+                        size: 48, color: Theme.of(context).disabledColor),
+                    const SizedBox(height: 8),
+                    const Text('Belum ada voucher aktif'),
+                  ]),
+                );
+              }
+              return Column(
+                children: daftar
+                    .map((v) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _VoucherCard(voucher: v),
+                        ))
+                    .toList(),
+              );
+            },
+          ),
         ],
       ),
     );
