@@ -69,10 +69,10 @@ dotnet run   # API di http://localhost:5038 (sesuai launchSettings.json)
 
 ### Web admin (React 19 + daisyUI)
 
-Ada di `web/` (root repo).
+Ada di `VoucherUmrohHaji/web`.
 
 ```bash
-cd web
+cd VoucherUmrohHaji/web
 npm install
 npm run dev    # → http://localhost:5173 (proxy /api ke 5038)
 ```
