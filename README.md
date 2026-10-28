@@ -33,7 +33,11 @@ Autentikasi: JWT Bearer (`Authorization: Bearer <token>`). Endpoint admin butuh 
 
 ### Cara 1 — Docker (Postgres + API sekaligus, direkomendasikan)
 
+Semua file docker ada di `VoucherUmrohHaji/service/` (Dockerfile, docker-compose.yml, .env).
+
 ```bash
+cd VoucherUmrohHaji/service
+
 # 1. Siapkan .env dari contoh, lalu edit isinya
 copy .env.example .env        # Windows   (Linux/macOS: cp)
 
