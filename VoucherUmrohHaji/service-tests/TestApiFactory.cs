@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using VoucherUmrohHaji.Service.Common;
 using VoucherUmrohHaji.Service.Data;
 
 // Adaptasi dari brief: EF Core 8+ meregistrasi tiap opsi AddDbContext sebagai
@@ -20,8 +21,13 @@ public class TestApiFactory : WebApplicationFactory<Program>
         builder.UseEnvironment("Development");
         builder.UseSetting("AdminUser:Password", "Admin#2026");
         builder.UseSetting("Jwt:Key", "test-key-yang-cukup-panjang-untuk-hmac-256");
+        builder.UseSetting("Midtrans:ServerKey", "SB-Mid-server-TEST");
+        builder.UseSetting("Midtrans:IsProduction", "false");
         builder.ConfigureServices(s =>
         {
+            // ganti klien Midtrans asli dengan fake agar test tidak menyentuh jaringan
+            s.RemoveAll(typeof(IMidtransClient));
+            s.AddSingleton<IMidtransClient, FakeMidtransClient>();
             s.RemoveAll(typeof(DbContextOptions<AppDbContext>));
             s.RemoveAll(typeof(DbContextOptions));
             s.RemoveAll(typeof(IDbContextOptionsConfiguration<AppDbContext>));

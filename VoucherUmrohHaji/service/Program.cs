@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using VoucherUmrohHaji.Service.Common;
 using VoucherUmrohHaji.Service.Data;
 using VoucherUmrohHaji.Service.Features.Auth;
+using VoucherUmrohHaji.Service.Features.Orders;
 using VoucherUmrohHaji.Service.Features.Referrals;
 using VoucherUmrohHaji.Service.Features.Vouchers;
 
@@ -19,6 +20,8 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<ReferralService>();
+builder.Services.Configure<MidtransOptions>(builder.Configuration.GetSection(MidtransOptions.SectionName));
+builder.Services.AddHttpClient<IMidtransClient, MidtransClient>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o => o.TokenValidationParameters = new TokenValidationParameters
@@ -52,6 +55,7 @@ if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapAuthEndpoints();
 app.MapVoucherEndpoints();
+app.MapOrderEndpoints();
 
 using (var scope = app.Services.CreateScope())
     await SeedData.InitializeAsync(scope.ServiceProvider.GetRequiredService<AppDbContext>(), app.Configuration);
