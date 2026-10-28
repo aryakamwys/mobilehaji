@@ -67,10 +67,14 @@ dotnet user-secrets set "Midtrans:ServerKey" "<server-key>"
 dotnet run   # API di http://localhost:5038 (sesuai launchSettings.json)
 ```
 
-### Web admin (daisyUI)
+### Web admin (React 19 + daisyUI)
+
+Ada di `VoucherUmrohHaji/service/web`.
 
 ```bash
-cd web && npm install && npm run dev   # → http://localhost:5173 (proxy /api ke 5038)
+cd VoucherUmrohHaji/service/web
+npm install
+npm run dev    # → http://localhost:5173 (proxy /api ke 5038)
 ```
 
 ### Flutter (manual)
