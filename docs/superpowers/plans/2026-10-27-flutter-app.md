@@ -47,7 +47,8 @@ Format Rupiah (ganti extension `Int.rupiah` Swift): `NumberFormat.currency(local
 // GET /api/wallet → { "balance", "owned":[{"title","value","orderId","createdAt"}],
 //                      "ledger":[{"type","title","amount","orderId","createdAt"}] }
 // GET /api/referral/me → { "referralCode","downlines","directDownlines":[{"name"}],
-//                           "factorPreview","uplineName","rules":[{"level","percentage"}] }
+//                           "factorPreview","uplineName","rules":[{"level","percentage"}],
+//                           "downlineStep","multiplier" }   // step & multiplier untuk prefill form komisi admin
 // POST /api/referral/bind {referralCode} → 200
 // POST /api/withdrawals {amount,bank,account,holder} → 200
 // GET /api/withdrawals → [{ "id","amount","bank","account","holder","status","createdAt" }]
