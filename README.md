@@ -31,18 +31,53 @@ Autentikasi: JWT Bearer (`Authorization: Bearer <token>`). Endpoint admin butuh 
 
 ## Menjalankan (dev)
 
-Backend ada di `VoucherUmrohHaji/service` (.NET Minimal API). Butuh Postgres.
+### Cara 1 — Docker (Postgres + API sekaligus, direkomendasikan)
 
 ```bash
-# Postgres (samakan dengan ConnectionStrings:Default di appsettings.Development.json)
-docker run -d --name haji-pg -e POSTGRES_PASSWORD=haji -e POSTGRES_DB=voucher -p 5432:5432 postgres:16
+# 1. Siapkan .env dari contoh, lalu edit isinya
+copy .env.example .env        # Windows   (Linux/macOS: cp)
 
+# 2. Nyalakan Postgres + API (build pertama ~1-2 menit)
+docker compose up --build -d
+
+# 3. Cek sehat
+curl http://localhost:5038/api/health     # → {"status":"ok"}
+
+# Hentikan / bersihkan
+docker compose down          # data Postgres tetap (volume pgdata)
+```
+
+Login admin hasil seed: `admin@haji.local` + `ADMIN_PASSWORD` dari `.env` Anda.
+
+Variabel `.env` (lengkap di `.env.example`): `JWT_KEY` *(wajib, ≥32 karakter acak)* · `ADMIN_PASSWORD` *(wajib)* · `MIDTRANS_SERVER_KEY` *(sandbox `SB-Mid-server-...`, kosong = order ditolak "Layanan pembayaran sedang tidak tersedia")* · `JWT_ISSUER`/`JWT_AUDIENCE`/`API_PORT` *(opsional, ada default)*.
+
+### Cara 2 — Tanpa Docker
+
+```bash
+docker run -d --name haji-pg -e POSTGRES_PASSWORD=haji -e POSTGRES_DB=voucher -p 5432:5432 postgres:16
 cd VoucherUmrohHaji/service
 dotnet user-secrets init
 dotnet user-secrets set "AdminUser:Password" "<password-admin>"   # wajib, untuk seed akun admin
 dotnet user-secrets set "Jwt:Key" "<minimal-32-karakter>"         # wajib
 dotnet user-secrets set "Midtrans:ServerKey" "<server-key>"
 dotnet run   # API di http://localhost:5038 (sesuai launchSettings.json)
+```
+
+### Web admin (daisyUI)
+
+```bash
+cd web && npm install && npm run dev   # → http://localhost:5173 (proxy /api ke 5038)
+```
+
+### Flutter (manual)
+
+```bash
+cd VoucherUmrohHaji/mobile
+flutter pub get
+# Atur API_BASE_URL di file .env proyek mobile:
+#   - Android emulator : http://10.0.2.2:5038
+#   - Device fisik     : http://<IP-LAN-komputer>:5038  (firewall: izinkan port 5038)
+flutter run
 ```
 
 Dokumen OpenAPI tersedia di `/openapi/v1.json` (hanya environment Development).
