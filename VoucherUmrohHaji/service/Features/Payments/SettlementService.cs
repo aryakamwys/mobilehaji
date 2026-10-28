@@ -14,12 +14,16 @@ public class SettlementService(AppDbContext db)
     /// <returns>false bila order tidak ada / bukan pending (no-op idempoten); true bila settlement dieksekusi.</returns>
     public async Task<bool> SettleAsync(string orderId)
     {
-        // Serializable + cek ulang status DI DALAM transaksi: dua webhook bersamaan tidak boleh
-        // keduanya lolos cek "pending". Kegagalan serialisasi dibiarkan lempar → 500 → Midtrans retry.
+        // Transaksi Serializable menjaga dua webhook bersamaan; cek status DI DALAMNYA pakai
+        // proyeksi skalar — bukan entity — supaya EF tidak memakai identity resolution
+        // (instance terlacak dengan nilai lama) dan nilai pembaca benar-benar dari DB.
+        // Kegagalan serialisasi dibiarkan lempar → 500 → Midtrans retry.
         await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
 
-        var order = await db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
-        if (order is null || order.Status != "pending") return false;
+        var dbStatus = await db.Orders.Where(o => o.Id == orderId).Select(o => (string?)o.Status).FirstOrDefaultAsync();
+        if (dbStatus != "pending") return false; // order tidak ada / bukan pending → no-op idempoten
+
+        var order = await db.Orders.FirstAsync(o => o.Id == orderId);
 
         order.Status = "settlement";
         var buyer = await db.Members.SingleAsync(m => m.Id == order.MemberId);
