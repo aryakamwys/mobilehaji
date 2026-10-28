@@ -40,10 +40,13 @@ class AuthController extends Notifier<AsyncValue<Member?>> {
 
   /// Tandai parentId terisi setelah bind referral sukses, supaya field
   /// referral di checkout langsung hilang tanpa perlu login ulang.
+  /// Dipersist ke storage agar token-restore pasca-restart juga konsisten.
   void tandaiUplineTerikat() {
     final m = state.value;
     if (m == null || m.parentId != null) return;
-    state = AsyncValue.data(m.denganParent('terikat'));
+    final baru = m.denganParent('terikat');
+    TokenStorage.updateMember(baru);
+    state = AsyncValue.data(baru);
   }
 
   Future<void> _autentikasi(String path, Map<String, dynamic> body) async {

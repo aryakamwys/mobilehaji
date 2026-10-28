@@ -52,6 +52,13 @@ class TokenStorage {
     await _box.write(key: _kMember, value: jsonEncode(memberBaru.toJson()));
   }
 
+  /// Perbarui data member tersimpan (mis. parentId setelah bind referral)
+  /// tanpa mengubah token.
+  static Future<void> updateMember(Member memberBaru) async {
+    member = memberBaru;
+    await _box.write(key: _kMember, value: jsonEncode(memberBaru.toJson()));
+  }
+
   static Future<void> clear() async {
     accessToken = null;
     refreshToken = null;

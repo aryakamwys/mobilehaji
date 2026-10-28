@@ -8,6 +8,7 @@ import '../../core/widgets/labeled_row.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/data_providers.dart';
+
 import 'checkout_sheet.dart';
 
 class ShopScreen extends ConsumerWidget {
@@ -16,13 +17,17 @@ class ShopScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final member = ref.watch(authProvider).value;
+    final wallet = ref.watch(walletProvider);
     final vouchers = ref.watch(vouchersProvider);
+    // Sumber saldo tunggal = walletProvider (di-invalidate saat settlement);
+    // selama masih loading pakai saldo member terakhir sebagai fallback.
+    final saldo = wallet.value?.balance ?? member?.balance ?? 0;
     return RefreshIndicator(
       onRefresh: () async => ref.refresh(vouchersProvider.future),
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          BalanceCard(title: 'Saldo aktif', amount: member?.balance ?? 0),
+          BalanceCard(title: 'Saldo aktif', amount: saldo),
           const SizedBox(height: 8),
           Text(
             'Saldo dan cashback dikreditkan otomatis setelah pembayaran Midtrans berhasil.',

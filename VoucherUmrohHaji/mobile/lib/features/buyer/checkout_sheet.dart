@@ -69,22 +69,30 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   }
 
   Future<void> _bayar() async {
+    final url = Uri.tryParse(_order?.snapUrl ?? '');
+    if (_order == null || url == null || !url.hasAuthority) {
+      _pesan('Halaman pembayaran tidak tersedia untuk order ini');
+      return; // tanpa Snap URL valid, poll 30 detik sia-sia
+    }
     setState(() => _membayar = true);
-    final url = Uri.parse(_order!.snapUrl ?? '');
     try {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } on Exception {
-      if (mounted) _pesan('Tidak dapat membuka halaman pembayaran Midtrans');
+      if (!mounted) return;
+      setState(() => _membayar = false);
+      _pesan('Tidak dapat membuka halaman pembayaran Midtrans');
+      return; // Snap tidak terbuka — jangan mulai poll
     }
     for (var i = 0; i < _maxPoll; i++) {
       await Future.delayed(_jarakPoll);
       if (!mounted) return;
       final status = await _cekStatus(); // null = gagal cek, lanjut poll
+      if (!mounted) return;
       if (status == null) continue;
       if (status == 'settlement') {
         _refreshSemua();
         _pesan('Pembayaran berhasil, saldo masuk', warna: Colors.green[700]);
-        if (mounted) Navigator.of(context).pop();
+        Navigator.of(context).pop();
         return;
       }
       if (status == 'cancel' || status == 'expire') {
@@ -92,14 +100,14 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
         _pesan(status == 'cancel'
             ? 'Order dibatalkan'
             : 'Order kedaluwarsa, silakan buat order baru');
-        if (mounted) Navigator.of(context).pop();
+        Navigator.of(context).pop();
         return;
       }
     }
-    if (mounted) {
-      _refreshSemua();
-      _pesan('Status pembayaran belum berubah — cek tab Dompet nanti');
-    }
+    if (!mounted) return;
+    _refreshSemua();
+    setState(() => _membayar = false);
+    _pesan('Status pembayaran belum berubah — cek tab Dompet nanti');
   }
 
   Future<String?> _cekStatus() async {
