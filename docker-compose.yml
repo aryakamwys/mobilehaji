@@ -1,0 +1,45 @@
+# Backend API + PostgreSQL untuk development lokal.
+# Jalankan dari root repo:  docker compose up --build -d
+# API:      http://localhost:5038  (Flutter .env: API_BASE_URL=http://localhost:5038,
+#           emulator Android: http://10.0.2.2:5038)
+# psql:     docker compose exec db psql -U postgres -d voucher
+#
+# Secret dibaca dari file `.env` di root repo (gitignored). Isi minimal:
+#   JWT_KEY=<>=32 karakter>  JWT_ISSUER=haji-service  JWT_AUDIENCE=haji-mobile
+#   ADMIN_PASSWORD=Admin#2026
+#   MIDTRANS_SERVER_KEY=   (kosong = order ditolak "Layanan pembayaran sedang tidak tersedia")
+# Nilainya sama dengan `dotnet user-secrets` proyek service.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: voucher
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: haji
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d voucher"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./VoucherUmrohHaji/service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development # baca appsettings.Development (CORS dll.)
+      ConnectionStrings__Default: "Host=db;Port=5432;Database=voucher;Username=postgres;Password=haji"
+      Jwt__Key: "${JWT_KEY:?buat .env dulu (lihat komentar atas)}"
+      Jwt__Issuer: "${JWT_ISSUER:-haji-service}"
+      Jwt__Audience: "${JWT_AUDIENCE:-haji-mobile}"
+      AdminUser__Password: "${ADMIN_PASSWORD:?buat .env dulu (lihat komentar atas)}"
+      Midtrans__ServerKey: "${MIDTRANS_SERVER_KEY:-}"
+      Midtrans__IsProduction: "false"
+    ports:
+      - "${API_PORT:-5038}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
