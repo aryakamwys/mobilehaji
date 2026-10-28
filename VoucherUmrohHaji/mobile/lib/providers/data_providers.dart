@@ -3,16 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/api_client.dart';
 import '../models/models.dart';
 
-List<T> _daftar<T>(dynamic data, T Function(Map<String, dynamic>) dariJson) =>
-    (data as List<dynamic>? ?? [])
-        .map((j) => dariJson(j as Map<String, dynamic>))
-        .toList();
-
 /// Katalog voucher aktif — GET /api/vouchers.
 final vouchersProvider =
     FutureProvider.autoDispose<List<Voucher>>((ref) async {
   final r = await ApiClient.dio.get('/api/vouchers');
-  return _daftar(r.data, Voucher.fromJson);
+  return daftarDariJson(r.data, Voucher.fromJson);
 });
 
 /// Saldo, inventory voucher, mutasi — GET /api/wallet.
@@ -32,13 +27,13 @@ final referralMeProvider =
 final withdrawalsProvider =
     FutureProvider.autoDispose<List<Withdrawal>>((ref) async {
   final r = await ApiClient.dio.get('/api/withdrawals');
-  return _daftar(r.data, Withdrawal.fromJson);
+  return daftarDariJson(r.data, Withdrawal.fromJson);
 });
 
 /// Daftar pesanan sendiri (terbaru dulu) — GET /api/orders.
 final myOrdersProvider = FutureProvider.autoDispose<List<Order>>((ref) async {
   final r = await ApiClient.dio.get('/api/orders');
-  return _daftar(r.data, Order.fromJson);
+  return daftarDariJson(r.data, Order.fromJson);
 });
 
 /// POST /api/referral/bind — mengikat upline dari kode referral.

@@ -103,3 +103,10 @@ String pesanError(Object e) {
   }
   return e.toString();
 }
+
+/// Ubah respons API berupa list JSON jadi `List<T>`; null/absen → list kosong.
+List<T> daftarDariJson<T>(
+        dynamic data, T Function(Map<String, dynamic>) dariJson) =>
+    (data as List<dynamic>? ?? [])
+        .map((j) => dariJson(j as Map<String, dynamic>))
+        .toList();

@@ -1,6 +1,5 @@
 /// Model domain — bentuk field mengikuti respons API backend
 /// (lihat docs/superpowers/plans/2026-10-27-flutter-app.md).
-/// Field id/memberId hanya dipakai MockStore (fase dummy, dihapus F3);
 /// fromJson memetakan respons API apa adanya.
 library;
 
@@ -88,16 +87,12 @@ class Voucher {
 
 class VoucherOwned {
   VoucherOwned({
-    this.id = '',
-    this.memberId = '',
     required this.title,
     required this.value,
     required this.orderId,
     required this.createdAt,
   });
 
-  String id;
-  String memberId;
   String title;
   int value;
   String orderId;
@@ -113,8 +108,6 @@ class VoucherOwned {
 
 class Ledger {
   Ledger({
-    this.id = '',
-    this.memberId = '',
     required this.type,
     required this.title,
     required this.amount,
@@ -122,8 +115,6 @@ class Ledger {
     required this.createdAt,
   });
 
-  String id;
-  String memberId;
   String type; // topup | mlm_cashback | withdraw | refund
   String title;
   int amount; // positif = masuk, negatif = keluar
@@ -141,7 +132,6 @@ class Ledger {
 
 class Withdrawal {
   Withdrawal({
-    this.memberId = '',
     required this.id,
     required this.amount,
     required this.bank,
@@ -151,7 +141,6 @@ class Withdrawal {
     required this.createdAt,
   });
 
-  String memberId;
   String id;
   int amount;
   String bank;
@@ -174,8 +163,6 @@ class Withdrawal {
 class Order {
   Order({
     required this.id,
-    this.memberId = '',
-    this.voucherId = '',
     this.voucherTitle,
     this.snapToken,
     this.snapUrl,
@@ -186,8 +173,6 @@ class Order {
   });
 
   String id; // orderId dari backend, format "ORD-…"
-  String memberId;
-  String voucherId;
   String? voucherTitle;
   String? snapToken;
   String? snapUrl;
@@ -286,12 +271,3 @@ class WalletData {
 
 DateTime _tanggal(dynamic iso) =>
     iso is String ? (DateTime.tryParse(iso)?.toLocal() ?? DateTime.now()) : DateTime.now();
-
-/// Error domain untuk ditampilkan ke user (pesan Bahasa Indonesia).
-class AppException implements Exception {
-  AppException(this.message);
-  final String message;
-
-  @override
-  String toString() => message;
-}

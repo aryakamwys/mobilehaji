@@ -3,11 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/api_client.dart';
 import '../models/models.dart';
 
-List<T> _daftar<T>(dynamic data, T Function(Map<String, dynamic>) dariJson) =>
-    (data as List<dynamic>? ?? [])
-        .map((j) => dariJson(j as Map<String, dynamic>))
-        .toList();
-
 /// Respons GET /api/admin/members.
 class MembersPage {
   MembersPage({required this.items, required this.totalPages});
@@ -27,14 +22,14 @@ class MembersPage {
 final adminVouchersProvider =
     FutureProvider.autoDispose<List<Voucher>>((ref) async {
   final r = await ApiClient.dio.get('/api/admin/vouchers');
-  return _daftar(r.data, Voucher.fromJson);
+  return daftarDariJson(r.data, Voucher.fromJson);
 });
 
 /// Semua pengajuan withdraw (pending dulu) — GET /api/admin/withdrawals.
 final adminWithdrawalsProvider =
     FutureProvider.autoDispose<List<Withdrawal>>((ref) async {
   final r = await ApiClient.dio.get('/api/admin/withdrawals');
-  return _daftar(r.data, Withdrawal.fromJson);
+  return daftarDariJson(r.data, Withdrawal.fromJson);
 });
 
 /// Satu halaman (20 baris) daftar anggota — GET /api/admin/members?page=n.
