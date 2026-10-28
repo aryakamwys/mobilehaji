@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api_client.dart';
 import '../../core/rupiah.dart';
@@ -10,6 +9,7 @@ import '../../core/widgets/labeled_row.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/data_providers.dart';
+import 'pembayaran_webview.dart';
 
 /// Membuka modal checkout untuk voucher terpilih.
 void bukaCheckout(BuildContext context, Voucher voucher) {
@@ -78,10 +78,11 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
     }
     setState(() => _membayar = true);
     try {
-      // launchUrl balas false (tanpa throw) saat URL tak bisa dibuka.
-      // Wajib Exception (bukan StateError/Error) agar tertangkap handler.
-      final ok = await launchUrl(url, mode: LaunchMode.externalApplication);
-      if (!ok) throw Exception('Halaman pembayaran tidak terbuka');
+      // Snap ditampilkan di dalam app (WebView); skema app pembayaran
+      // (gopay:// dll) otomatis diteruskan ke app eksternal oleh WebView.
+      await Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => PembayaranWebView(url: url.toString()),
+      ));
     } on Exception {
       if (!mounted) return;
       setState(() => _membayar = false);
