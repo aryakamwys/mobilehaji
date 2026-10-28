@@ -49,6 +49,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+// CORS untuk admin web (dev: Vite di 5173). Produksi: set "Cors:Origins" (comma-separated).
+builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
+    .WithOrigins((builder.Configuration["Cors:Origins"] ?? "http://localhost:5173")
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    .AllowAnyHeader().AllowAnyMethod()));
+
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -61,6 +67,7 @@ builder.Services.AddRateLimiter(o =>
 
 var app = builder.Build();
 app.UseExceptionHandler();
+app.UseCors();
 // di belakang reverse proxy (produksi) IP klien & skema asli datang dari header X-Forwarded-*
 if (!app.Environment.IsDevelopment())
     app.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto });
