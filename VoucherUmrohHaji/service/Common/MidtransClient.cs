@@ -24,7 +24,12 @@ public class MidtransClient(HttpClient http, IOptions<MidtransOptions> options, 
             {
                 var token = root.GetProperty("token").GetString()
                     ?? throw new InvalidOperationException("Midtrans tidak mengembalikan token");
-                return (Token: token, RedirectUrl: $"{BaseUrl}/snap/v2/{token}");
+                // redirect_url resmi dari Midtrans (pola path bisa berubah, mis. /snap/v4/) —
+                // jangan direkam sendiri; fallback hanya bila Midtrans tidak mengirimkannya.
+                var redirectUrl = root.TryGetProperty("redirect_url", out var url) && !string.IsNullOrWhiteSpace(url.GetString())
+                    ? url.GetString()!
+                    : $"{BaseUrl}/snap/v2/{token}";
+                return (Token: token, RedirectUrl: redirectUrl);
             });
 
     public Task<MidtransTransactionStatus> GetTransactionStatusAsync(string orderId) =>
