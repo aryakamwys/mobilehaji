@@ -76,12 +76,17 @@ public static class PaymentEndpoints
                 await settlement.SettleAsync(order.Id);
                 break;
             case "cancel" or "deny":
-                if (order.Status == "pending") { order.Status = "cancel"; await db.SaveChangesAsync(); }
+                if (await PerbaruiJikaPendingAsync(db, order.Id, "cancel") > 0) order.Status = "cancel";
                 break;
             case "expire":
-                if (order.Status == "pending") { order.Status = "expire"; await db.SaveChangesAsync(); }
+                if (await PerbaruiJikaPendingAsync(db, order.Id, "expire") > 0) order.Status = "expire";
                 break;
             // status lain (pending, deny pada order non-pending, dsb.) → no-op
         }
     }
+
+    /// <summary>UPDATE ... WHERE status='pending' — guarded, no-op bila sudah settle/cancel; mencegah race notifikasi ganda.</summary>
+    private static Task<int> PerbaruiJikaPendingAsync(AppDbContext db, string orderId, string statusBaru) =>
+        db.Orders.Where(o => o.Id == orderId && o.Status == "pending")
+            .ExecuteUpdateAsync(s => s.SetProperty(o => o.Status, statusBaru));
 }

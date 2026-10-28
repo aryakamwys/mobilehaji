@@ -10,7 +10,8 @@ namespace VoucherUmrohHaji.Service.Common;
 /// <summary>
 /// Klien HTTP Midtrans Snap/API (Basic auth serverKey:). Semua kegagalan — jaringan,
 /// status HTTP gagal, maupun body tak terduga — diterjemahkan menjadi DomainException
-/// generik; detail HTTP hanya masuk log agar tidak bocor ke klien.
+/// generik; detail HTTP hanya masuk log agar tidak bocor ke klien. Cancellation
+/// (termasuk timeout HttpClient) diteruskan apa adanya, bukan DomainException.
 /// </summary>
 public class MidtransClient(HttpClient http, IOptions<MidtransOptions> options, ILogger<MidtransClient> logger) : IMidtransClient
 {
@@ -47,7 +48,7 @@ public class MidtransClient(HttpClient http, IOptions<MidtransOptions> options, 
             using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
             return map(doc.RootElement);
         }
-        catch (Exception ex) when (ex is not DomainException)
+        catch (Exception ex) when (ex is not (DomainException or OperationCanceledException))
         {
             logger.LogWarning(ex, "Panggilan Midtrans {Method} {Path} gagal", method, path);
             throw new DomainException("Layanan pembayaran sedang tidak tersedia");

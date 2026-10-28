@@ -1,6 +1,7 @@
 using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -26,7 +27,13 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<ReferralService>();
 builder.Services.AddScoped<SettlementService>();
 builder.Services.Configure<MidtransOptions>(builder.Configuration.GetSection(MidtransOptions.SectionName));
-builder.Services.AddHttpClient<IMidtransClient, MidtransClient>();
+builder.Services.AddHttpClient<IMidtransClient, MidtransClient>(c => c.Timeout = TimeSpan.FromSeconds(10));
+
+// fail-fast: tanpa kunci yang valid semua terbitan token (login/register) gagal runtime —
+// lebih baik menolak menyala. Test factory juga set Jwt:Key via UseSetting, jadi guard ini netral bagi test.
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
+    throw new InvalidOperationException("Jwt:Key belum dikonfigurasi atau kurang dari 32 karakter (user-secrets).");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o => o.TokenValidationParameters = new TokenValidationParameters
@@ -45,6 +52,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    o.OnRejected = async (ctx, _) => await ctx.HttpContext.Response.WriteAsJsonAsync(
+        new { error = "Terlalu banyak percobaan, coba lagi sebentar" }); // kontrak body untuk SnackBar Flutter
     o.AddPolicy("login", ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(1) }));
@@ -52,6 +61,9 @@ builder.Services.AddRateLimiter(o =>
 
 var app = builder.Build();
 app.UseExceptionHandler();
+// di belakang reverse proxy (produksi) IP klien & skema asli datang dari header X-Forwarded-*
+if (!app.Environment.IsDevelopment())
+    app.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto });
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();

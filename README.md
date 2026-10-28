@@ -48,3 +48,8 @@ dotnet run   # API di http://localhost:5038 (sesuai launchSettings.json)
 Dokumen OpenAPI tersedia di `/openapi/v1.json` (hanya environment Development).
 
 Webhook Midtrans: di dashboard Midtrans (Settings → Configuration), set Payment Notification URL ke `https://<host-public>/api/webhooks/midtrans`. Untuk dev lokal pakai ngrok/dev tunnel karena Midtrans harus bisa menjangkau mesinmu.
+
+### Batasan diketahui (backend, v1)
+
+- Settlement tidak membandingkan `gross_amount` dari Midtrans dengan nominal order — nilai order sendiri yang dipakai.
+- Notifikasi `refund` / `partial_refund` dari Midtrans saat ini diabaikan (no-op), saldo tidak berkurang.

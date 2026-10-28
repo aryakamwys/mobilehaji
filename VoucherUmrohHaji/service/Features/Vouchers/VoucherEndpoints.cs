@@ -14,7 +14,7 @@ public static class VoucherEndpoints
     public static IEndpointRouteBuilder MapVoucherEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/vouchers", async (AppDbContext db) =>
-            await db.Vouchers.Where(v => v.IsActive)
+            await db.Vouchers.Where(v => v.IsActive).OrderBy(v => v.Title)
                 .Select(v => new VoucherDto(v.Id, v.Title, v.Price, v.Value, v.IsActive))
                 .ToListAsync())
             .RequireAuthorization().WithTags("Vouchers").WithSummary("Daftar voucher aktif");
