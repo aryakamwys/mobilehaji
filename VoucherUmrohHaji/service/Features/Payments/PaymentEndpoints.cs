@@ -45,7 +45,7 @@ public static class PaymentEndpoints
 
             await TerapkanStatusAsync(order, notif.TransactionStatus, notif.FraudStatus, db, settlement);
             return Results.Ok();
-        });
+        }).WithTags("Payments").WithSummary("Webhook notifikasi pembayaran Midtrans");
 
         app.MapGet("/api/orders/{id}/status", async (
             string id, ClaimsPrincipal user, AppDbContext db, IMidtransClient midtrans, SettlementService settlement) =>
@@ -60,7 +60,7 @@ public static class PaymentEndpoints
                 await TerapkanStatusAsync(order, status.TransactionStatus, status.FraudStatus, db, settlement);
             }
             return Results.Ok(new OrderStatusResponse(order.Id, order.Status));
-        }).RequireAuthorization();
+        }).RequireAuthorization().WithTags("Orders").WithSummary("Cek status order (+ inquiry Midtrans)");
 
         return app;
     }

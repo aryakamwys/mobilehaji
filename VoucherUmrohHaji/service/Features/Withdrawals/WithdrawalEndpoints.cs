@@ -55,7 +55,7 @@ public static class WithdrawalEndpoints
             await tx.CommitAsync();
             return Results.Ok(new WithdrawalDto(withdrawal.Id, withdrawal.Amount, withdrawal.Bank,
                 withdrawal.Account, withdrawal.Holder, withdrawal.Status, withdrawal.CreatedAt));
-        }).RequireAuthorization();
+        }).RequireAuthorization().WithTags("Withdrawals").WithSummary("Ajukan penarikan (saldo di-hold)");
 
         // Riwayat withdraw selalu milik pemanggil, terbaru dulu.
         app.MapGet("/api/withdrawals", async (ClaimsPrincipal user, AppDbContext db) =>
@@ -66,7 +66,7 @@ public static class WithdrawalEndpoints
                 .OrderByDescending(w => w.CreatedAt)
                 .Select(w => new WithdrawalDto(w.Id, w.Amount, w.Bank, w.Account, w.Holder, w.Status, w.CreatedAt))
                 .ToListAsync());
-        }).RequireAuthorization();
+        }).RequireAuthorization().WithTags("Withdrawals").WithSummary("Riwayat penarikan");
 
         return app;
     }

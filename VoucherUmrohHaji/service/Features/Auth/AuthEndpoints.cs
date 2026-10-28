@@ -38,7 +38,7 @@ public static class AuthEndpoints
             await db.SaveChangesAsync();
             var (access, refresh, expiresIn) = await tokens.IssueAsync(member);
             return Results.Ok(new AuthResponse(access, refresh, expiresIn, member.ToDto()));
-        });
+        }).WithTags("Auth").WithSummary("Daftar akun baru (referral opsional)");
 
         app.MapPost("/api/auth/login", async (LoginRequest req, AppDbContext db, TokenService tokens) =>
         {
@@ -50,7 +50,7 @@ public static class AuthEndpoints
                 return Results.Unauthorized();
             var (access, refresh, expiresIn) = await tokens.IssueAsync(member);
             return Results.Ok(new AuthResponse(access, refresh, expiresIn, member.ToDto()));
-        }).RequireRateLimiting("login");
+        }).RequireRateLimiting("login").WithTags("Auth").WithSummary("Login, dapat access + refresh token");
 
         app.MapPost("/api/auth/refresh", async (RefreshRequest req, TokenService tokens) =>
         {
@@ -58,7 +58,7 @@ public static class AuthEndpoints
                 throw new DomainException("Refresh token tidak valid atau kedaluwarsa");
             var (access, refresh, member) = await tokens.RefreshAsync(req.RefreshToken);
             return Results.Ok(new AuthResponse(access, refresh, TokenService.AccessTokenLifetimeSeconds, member.ToDto()));
-        });
+        }).WithTags("Auth").WithSummary("Tukar refresh token");
 
         return app;
     }

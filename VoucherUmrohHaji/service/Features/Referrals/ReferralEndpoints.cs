@@ -37,7 +37,7 @@ public static class ReferralEndpoints
             return Results.Ok(new ReferralMeResponse(me.ReferralCode, me.Downlines, directDownlines,
                 MlmCalculator.ComputeFactor(me.Downlines, setting.DownlineStep, setting.Multiplier),
                 uplineName, rules, setting.DownlineStep, setting.Multiplier));
-        }).RequireAuthorization();
+        }).RequireAuthorization().WithTags("Referrals").WithSummary("Kode referral, jaringan, pengali cashback");
 
         // Semua validasi (bukan admin, belum punya upline, kode ada, bukan kode sendiri, tanpa siklus)
         // ada di ReferralService.BindUplineAsync → DomainException → 400.
@@ -47,7 +47,7 @@ public static class ReferralEndpoints
             var member = await db.Members.SingleAsync(m => m.Id == user.MemberId());
             await referrals.BindUplineAsync(member, req.ReferralCode);
             return Results.Ok(new { ok = true });
-        }).RequireAuthorization();
+        }).RequireAuthorization().WithTags("Referrals").WithSummary("Hubungkan upline");
 
         return app;
     }

@@ -57,7 +57,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
-app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/api/health", () => Results.Ok(new { status = "ok" })).WithTags("Health").WithSummary("Health check");
 app.MapAuthEndpoints();
 app.MapVoucherEndpoints();
 app.MapOrderEndpoints();

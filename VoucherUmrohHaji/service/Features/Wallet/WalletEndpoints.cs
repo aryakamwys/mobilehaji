@@ -32,7 +32,7 @@ public static class WalletEndpoints
                 .Select(l => new LedgerItem(l.Type, l.Title, l.Amount, l.OrderId, l.CreatedAt))
                 .ToListAsync();
             return Results.Ok(new WalletResponse(balance, owned, ledger));
-        }).RequireAuthorization();
+        }).RequireAuthorization().WithTags("Wallet").WithSummary("Saldo, voucher dimiliki, mutasi");
 
         return app;
     }

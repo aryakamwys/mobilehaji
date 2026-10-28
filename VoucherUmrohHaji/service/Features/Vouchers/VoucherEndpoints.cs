@@ -17,7 +17,7 @@ public static class VoucherEndpoints
             await db.Vouchers.Where(v => v.IsActive)
                 .Select(v => new VoucherDto(v.Id, v.Title, v.Price, v.Value, v.IsActive))
                 .ToListAsync())
-            .RequireAuthorization();
+            .RequireAuthorization().WithTags("Vouchers").WithSummary("Daftar voucher aktif");
 
         app.MapPost("/api/admin/vouchers", async (CreateVoucherRequest req, AppDbContext db) =>
         {
@@ -26,7 +26,7 @@ public static class VoucherEndpoints
             db.Vouchers.Add(voucher);
             await db.SaveChangesAsync();
             return Results.Created($"/api/admin/vouchers/{voucher.Id}", voucher.ToDto());
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        }).RequireAuthorization(p => p.RequireRole("admin")).WithTags("Admin").WithSummary("Buat voucher");
 
         app.MapPut("/api/admin/vouchers/{id:guid}", async (Guid id, UpdateVoucherRequest req, AppDbContext db) =>
         {
@@ -39,7 +39,7 @@ public static class VoucherEndpoints
             voucher.IsActive = req.IsActive;
             await db.SaveChangesAsync();
             return Results.Ok(voucher.ToDto());
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        }).RequireAuthorization(p => p.RequireRole("admin")).WithTags("Admin").WithSummary("Ubah voucher");
 
         app.MapDelete("/api/admin/vouchers/{id:guid}", async (Guid id, AppDbContext db) =>
         {
@@ -50,7 +50,7 @@ public static class VoucherEndpoints
             db.Vouchers.Remove(voucher);
             await db.SaveChangesAsync();
             return Results.NoContent();
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        }).RequireAuthorization(p => p.RequireRole("admin")).WithTags("Admin").WithSummary("Hapus voucher");
 
         return app;
     }

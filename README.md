@@ -20,15 +20,31 @@ Voucher top-up Umroh & Haji dengan cashback dan point
 | POST | `/api/referral/bind` | Hubungkan upline |
 | POST | `/api/withdrawals` | Ajukan penarikan (saldo di-hold) |
 | GET | `/api/withdrawals` | Riwayat penarikan |
-| GET/POST/PUT/DELETE | `/api/admin/vouchers` | CRUD voucher (admin) |
+| POST/PUT/DELETE | `/api/admin/vouchers` (PUT/DELETE `/{id}`) | Buat/ubah/hapus voucher (admin) |
 | GET | `/api/admin/withdrawals` | Semua pengajuan withdraw (admin) |
 | POST | `/api/admin/withdrawals/{id}/approve` / `reject` | Approval withdraw (admin) |
 | GET | `/api/admin/members` | Daftar anggota (admin) |
 | PUT | `/api/admin/mlm-config` | Persentase per level, step, multiplier (admin) |
 | GET | `/api/health` | Health check |
 
-Autentikasi: JWT Bearer (`Authorization: Bearer <token>`). Endpoint admin butuh role `admin`.
+Autentikasi: JWT Bearer (`Authorization: Bearer <token>`). Endpoint admin butuh role `admin`. Webhook Midtrans anonim (diverifikasi via signature SHA256).
 
 ## Menjalankan (dev)
 
-ntar dibikin
+Backend ada di `VoucherUmrohHaji/service` (.NET Minimal API). Butuh Postgres.
+
+```bash
+# Postgres (samakan dengan ConnectionStrings:Default di appsettings.Development.json)
+docker run -d --name haji-pg -e POSTGRES_PASSWORD=haji -e POSTGRES_DB=voucher -p 5432:5432 postgres:16
+
+cd VoucherUmrohHaji/service
+dotnet user-secrets init
+dotnet user-secrets set "AdminUser:Password" "<password-admin>"   # wajib, untuk seed akun admin
+dotnet user-secrets set "Jwt:Key" "<minimal-32-karakter>"         # wajib
+dotnet user-secrets set "Midtrans:ServerKey" "<server-key>"
+dotnet run   # API di http://localhost:5038 (sesuai launchSettings.json)
+```
+
+Dokumen OpenAPI tersedia di `/openapi/v1.json` (hanya environment Development).
+
+Webhook Midtrans: di dashboard Midtrans (Settings → Configuration), set Payment Notification URL ke `https://<host-public>/api/webhooks/midtrans`. Untuk dev lokal pakai ngrok/dev tunnel karena Midtrans harus bisa menjangkau mesinmu.

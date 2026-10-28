@@ -38,7 +38,7 @@ public static class OrderEndpoints
             db.Orders.Add(order);
             await db.SaveChangesAsync();
             return Results.Ok(new CreateOrderResponse(order.Id, order.Amount, order.Value, order.Status, order.SnapToken, redirectUrl));
-        }).RequireAuthorization();
+        }).RequireAuthorization().WithTags("Orders").WithSummary("Buat order, dapat Snap token Midtrans");
 
         app.MapGet("/api/orders", async (ClaimsPrincipal user, AppDbContext db) =>
         {
@@ -51,7 +51,7 @@ public static class OrderEndpoints
                 orderby o.CreatedAt descending, o.Id descending
                 select new OrderListItem(o.Id, v.Title, o.Amount, o.Value, o.Status, o.CreatedAt)
             ).Take(20).ToListAsync());
-        }).RequireAuthorization();
+        }).RequireAuthorization().WithTags("Orders").WithSummary("Riwayat order sendiri");
 
         app.MapPost("/api/orders/{id}/cancel", async (string id, ClaimsPrincipal user, AppDbContext db) =>
         {
@@ -62,7 +62,7 @@ public static class OrderEndpoints
             order.Status = "cancel";
             await db.SaveChangesAsync();
             return Results.Ok(new CancelOrderResponse(order.Id, order.Status));
-        }).RequireAuthorization();
+        }).RequireAuthorization().WithTags("Orders").WithSummary("Batalkan order pending");
 
         return app;
     }

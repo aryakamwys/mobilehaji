@@ -25,15 +25,15 @@ public static class AdminEndpoints
                 .ThenByDescending(w => w.CreatedAt)
                 .Select(w => new WithdrawalDto(w.Id, w.Amount, w.Bank, w.Account, w.Holder, w.Status, w.CreatedAt))
                 .ToListAsync()))
-            .RequireAuthorization(p => p.RequireRole("admin"));
+            .RequireAuthorization(p => p.RequireRole("admin")).WithTags("Admin").WithSummary("Semua pengajuan withdraw");
 
         app.MapPost("/api/admin/withdrawals/{id}/approve", (string id, AppDbContext db) =>
                 ProsesAsync(db, id, approve: true))
-            .RequireAuthorization(p => p.RequireRole("admin"));
+            .RequireAuthorization(p => p.RequireRole("admin")).WithTags("Admin").WithSummary("Setujui penarikan");
 
         app.MapPost("/api/admin/withdrawals/{id}/reject", (string id, AppDbContext db) =>
                 ProsesAsync(db, id, approve: false))
-            .RequireAuthorization(p => p.RequireRole("admin"));
+            .RequireAuthorization(p => p.RequireRole("admin")).WithTags("Admin").WithSummary("Tolak penarikan (saldo dikembalikan)");
 
         // Daftar anggota: urut nama di sisi DB, halaman + totalPages (kontrak Flutter).
         app.MapGet("/api/admin/members", async (int? page, int? pageSize, AppDbContext db) =>
@@ -48,7 +48,7 @@ public static class AdminEndpoints
                     m.Balance, m.Downlines, m.ParentId))
                 .ToListAsync();
             return Results.Ok(new MembersPageResponse(items, (int)Math.Ceiling(total / (double)size)));
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        }).RequireAuthorization(p => p.RequireRole("admin")).WithTags("Admin").WithSummary("Daftar anggota");
 
         // Validasi mengikuti Store.swift configure: 1–20 level, tiap 0–100, step > 0,
         // multiplier 0–100 (decimal selalu finite; nilai tak terparse ditolak binding → 400).
@@ -71,7 +71,7 @@ public static class AdminEndpoints
             return Results.Ok(new MlmConfigResponse(
                 req.Levels.Select((p, i) => new MlmRuleItem(i + 1, p)).ToList(),
                 req.DownlineStep, req.Multiplier));
-        }).RequireAuthorization(p => p.RequireRole("admin"));
+        }).RequireAuthorization(p => p.RequireRole("admin")).WithTags("Admin").WithSummary("Persentase per level, step, multiplier");
 
         return app;
     }
