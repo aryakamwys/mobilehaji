@@ -151,8 +151,12 @@ public class FakeMidtransClient : IMidtransClient
     public Task<(string Token, string RedirectUrl)> CreateSnapTransactionAsync(string orderId, decimal grossAmount)
         => Task.FromResult((Token: SnapToken, RedirectUrl: SnapUrl));
 
+    /// <summary>Status inquiry yang dikembalikan berikutnya — diubah test inquiry (Task 5) untuk simulasi settlement.</summary>
+    public string NextStatus { get; set; } = "pending";
+    public string? NextFraudStatus { get; set; } = "accept";
+
     public Task<MidtransTransactionStatus> GetTransactionStatusAsync(string orderId)
-        => Task.FromResult(new MidtransTransactionStatus("pending", "accept", "200", "50000.00"));
+        => Task.FromResult(new MidtransTransactionStatus(NextStatus, NextFraudStatus, "200", "50000.00"));
 }
 
 public record CreateOrderResponse(string OrderId, long Amount, long Value, string Status, string? SnapToken, string SnapUrl);

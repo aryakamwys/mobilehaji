@@ -8,6 +8,7 @@ using VoucherUmrohHaji.Service.Common;
 using VoucherUmrohHaji.Service.Data;
 using VoucherUmrohHaji.Service.Features.Auth;
 using VoucherUmrohHaji.Service.Features.Orders;
+using VoucherUmrohHaji.Service.Features.Payments;
 using VoucherUmrohHaji.Service.Features.Referrals;
 using VoucherUmrohHaji.Service.Features.Vouchers;
 
@@ -20,6 +21,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<ReferralService>();
+builder.Services.AddScoped<SettlementService>();
 builder.Services.Configure<MidtransOptions>(builder.Configuration.GetSection(MidtransOptions.SectionName));
 builder.Services.AddHttpClient<IMidtransClient, MidtransClient>();
 
@@ -56,6 +58,7 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapAuthEndpoints();
 app.MapVoucherEndpoints();
 app.MapOrderEndpoints();
+app.MapPaymentEndpoints();
 
 using (var scope = app.Services.CreateScope())
     await SeedData.InitializeAsync(scope.ServiceProvider.GetRequiredService<AppDbContext>(), app.Configuration);
