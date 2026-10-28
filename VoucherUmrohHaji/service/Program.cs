@@ -8,6 +8,7 @@ using VoucherUmrohHaji.Service.Common;
 using VoucherUmrohHaji.Service.Data;
 using VoucherUmrohHaji.Service.Features.Auth;
 using VoucherUmrohHaji.Service.Features.Referrals;
+using VoucherUmrohHaji.Service.Features.Vouchers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,6 +51,7 @@ if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapAuthEndpoints();
+app.MapVoucherEndpoints();
 
 using (var scope = app.Services.CreateScope())
     await SeedData.InitializeAsync(scope.ServiceProvider.GetRequiredService<AppDbContext>(), app.Configuration);

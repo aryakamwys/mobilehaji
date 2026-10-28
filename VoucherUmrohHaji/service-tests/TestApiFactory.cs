@@ -32,4 +32,7 @@ public class TestApiFactory : WebApplicationFactory<Program>
                 .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
         });
     }
+
+    /// <summary>Scope DI berisi AppDbContext untuk seeding/assert DB langsung dari test.</summary>
+    public IServiceScope CreateAdminScope() => Services.CreateScope();
 }
