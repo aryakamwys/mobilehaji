@@ -68,9 +68,9 @@ public class WithdrawalTests(TestApiFactory factory) : IClassFixture<TestApiFact
         return (buyer, client);
     }
 
-    /// <summary>Signature SHA256 Midtrans atas order_id + status_code + gross_amount + serverKey, hex lowercase.</summary>
+    /// <summary>Signature SHA512 Midtrans atas order_id + status_code + gross_amount + serverKey, hex lowercase.</summary>
     private static string SignatureUntuk(string orderId, string statusCode = "200", string grossAmount = "100000.00") =>
-        Convert.ToHexString(SHA256.HashData(Encoding.ASCII.GetBytes(orderId + statusCode + grossAmount + ServerKey)))
+        Convert.ToHexString(SHA512.HashData(Encoding.ASCII.GetBytes(orderId + statusCode + grossAmount + ServerKey)))
             .ToLowerInvariant();
 
     private async Task<T> DbAsync<T>(Func<AppDbContext, Task<T>> query)

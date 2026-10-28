@@ -65,9 +65,9 @@ public class PaymentTests(TestApiFactory factory) : IClassFixture<TestApiFactory
         return (order!.OrderId, buyer.Member.Id, buyer.Member.Name, voucher!.Title, upline.Member.Id, grandparentId, buyer.AccessToken);
     }
 
-    /// <summary>Signature SHA256 Midtrans atas order_id + status_code + gross_amount + serverKey, hex lowercase.</summary>
+    /// <summary>Signature SHA512 Midtrans atas order_id + status_code + gross_amount + serverKey, hex lowercase.</summary>
     private static string SignatureUntuk(string orderId, string statusCode = "200", string grossAmount = "100000.00") =>
-        Convert.ToHexString(SHA256.HashData(Encoding.ASCII.GetBytes(orderId + statusCode + grossAmount + ServerKey)))
+        Convert.ToHexString(SHA512.HashData(Encoding.ASCII.GetBytes(orderId + statusCode + grossAmount + ServerKey)))
             .ToLowerInvariant();
 
     private static object Notifikasi(string orderId, string transactionStatus, string signature,
@@ -176,6 +176,88 @@ public class PaymentTests(TestApiFactory factory) : IClassFixture<TestApiFactory
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         Assert.Equal(0L, db.Members.Single(m => m.Id == buyerId).Balance);
         Assert.Equal("pending", db.Orders.Find(orderId)!.Status);
+    }
+
+    [Fact]
+    public async Task Webhook_pakai_SHA512_bukan_SHA256()
+    {
+        var (orderId, buyerId, _, _, uplineId, _, _) = await BuatOrderPendingAsync("Lima", withGrandparent: false);
+        // SHA256 atas payload yang sama — kalau endpoint masih memakai SHA256, tanda ini diterima
+        var sha256 = Convert.ToHexString(SHA256.HashData(
+            Encoding.ASCII.GetBytes(orderId + "200" + "100000.00" + ServerKey))).ToLowerInvariant();
+
+        var ditolak = await factory.CreateClient().PostAsJsonAsync("/api/webhooks/midtrans",
+            Notifikasi(orderId, "settlement", sha256));
+        Assert.Equal(HttpStatusCode.BadRequest, ditolak.StatusCode);
+
+        using (var scope = factory.CreateAdminScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            Assert.Equal(0L, db.Members.Single(m => m.Id == buyerId).Balance);
+            Assert.Equal(0L, db.Members.Single(m => m.Id == uplineId).Balance);
+            Assert.Empty(db.Ledgers.Where(l => l.OrderId == orderId));
+            Assert.Equal("pending", db.Orders.Find(orderId)!.Status);
+        }
+
+        var diterima = await factory.CreateClient().PostAsJsonAsync("/api/webhooks/midtrans",
+            Notifikasi(orderId, "settlement", SignatureUntuk(orderId)));
+        Assert.True(diterima.IsSuccessStatusCode, await diterima.Content.ReadAsStringAsync());
+
+        using (var scope = factory.CreateAdminScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            Assert.Equal(100_000L, db.Members.Single(m => m.Id == buyerId).Balance);
+            Assert.Single(db.Ledgers.Where(l => l.OrderId == orderId && l.Type == "topup"));
+            Assert.Equal("settlement", db.Orders.Find(orderId)!.Status);
+        }
+    }
+
+    [Fact]
+    public async Task Capture_accept_settle_dan_capture_challenge_noop()
+    {
+        var (orderId, buyerId, _, _, _, _, _) = await BuatOrderPendingAsync("Enam", withGrandparent: false);
+        var challenge = await factory.CreateClient().PostAsJsonAsync("/api/webhooks/midtrans",
+            Notifikasi(orderId, "capture", SignatureUntuk(orderId), fraudStatus: "challenge"));
+        Assert.True(challenge.IsSuccessStatusCode, await challenge.Content.ReadAsStringAsync());
+
+        using (var scope = factory.CreateAdminScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            Assert.Equal("pending", db.Orders.Find(orderId)!.Status); // challenge bukan settle
+            Assert.Empty(db.Ledgers.Where(l => l.OrderId == orderId));
+        }
+
+        var capture = await factory.CreateClient().PostAsJsonAsync("/api/webhooks/midtrans",
+            Notifikasi(orderId, "capture", SignatureUntuk(orderId), fraudStatus: "accept"));
+        Assert.True(capture.IsSuccessStatusCode, await capture.Content.ReadAsStringAsync());
+
+        using (var scope = factory.CreateAdminScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            Assert.Equal(100_000L, db.Members.Single(m => m.Id == buyerId).Balance);
+            Assert.Equal("settlement", db.Orders.Find(orderId)!.Status);
+        }
+    }
+
+    [Fact]
+    public async Task Deny_jadi_cancel_dan_expire_jadi_expire()
+    {
+        var (orderId, buyerId, _, _, _, _, _) = await BuatOrderPendingAsync("Tujuh", withGrandparent: false);
+        var deny = await factory.CreateClient().PostAsJsonAsync("/api/webhooks/midtrans",
+            Notifikasi(orderId, "deny", SignatureUntuk(orderId)));
+        Assert.True(deny.IsSuccessStatusCode, await deny.Content.ReadAsStringAsync());
+
+        var (orderId2, _, _, _, _, _, _) = await BuatOrderPendingAsync("Delapan", withGrandparent: false);
+        var expire = await factory.CreateClient().PostAsJsonAsync("/api/webhooks/midtrans",
+            Notifikasi(orderId2, "expire", SignatureUntuk(orderId2)));
+        Assert.True(expire.IsSuccessStatusCode, await expire.Content.ReadAsStringAsync());
+
+        using var scope = factory.CreateAdminScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Assert.Equal("cancel", db.Orders.Find(orderId)!.Status);
+        Assert.Equal("expire", db.Orders.Find(orderId2)!.Status);
+        Assert.Equal(0L, db.Members.Single(m => m.Id == buyerId).Balance);
+        Assert.Empty(db.Ledgers.Where(l => l.OrderId == orderId || l.OrderId == orderId2));
     }
 }
 

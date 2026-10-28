@@ -27,7 +27,7 @@ Voucher top-up Umroh & Haji dengan cashback dan point
 | PUT | `/api/admin/mlm-config` | Persentase per level, step, multiplier (admin) |
 | GET | `/api/health` | Health check |
 
-Autentikasi: JWT Bearer (`Authorization: Bearer <token>`). Endpoint admin butuh role `admin`. Webhook Midtrans anonim (diverifikasi via signature SHA256).
+Autentikasi: JWT Bearer (`Authorization: Bearer <token>`). Endpoint admin butuh role `admin`. Webhook Midtrans anonim (diverifikasi via signature SHA512).
 
 ## Menjalankan (dev)
 

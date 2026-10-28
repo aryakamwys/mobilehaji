@@ -25,14 +25,14 @@ public static class PaymentEndpoints
 {
     public static IEndpointRouteBuilder MapPaymentEndpoints(this IEndpointRouteBuilder app)
     {
-        // Webhook dipanggil server Midtrans — anonim, keandalan dari signature SHA256.
+        // Webhook dipanggil server Midtrans — anonim, keandalan dari signature SHA512.
         app.MapPost("/api/webhooks/midtrans", async (
             MidtransNotification notif, AppDbContext db, SettlementService settlement,
             IOptions<MidtransOptions> options, ILogger<Program> logger) =>
         {
-            // signature = SHA256(order_id + status_code + gross_amount + serverKey) atas string apa adanya
+            // signature = SHA512(order_id + status_code + gross_amount + serverKey) atas string apa adanya
             var payload = notif.OrderId + notif.StatusCode + notif.GrossAmount + options.Value.ServerKey;
-            var expected = Convert.ToHexString(SHA256.HashData(Encoding.ASCII.GetBytes(payload)));
+            var expected = Convert.ToHexString(SHA512.HashData(Encoding.ASCII.GetBytes(payload)));
             if (!string.Equals(expected, notif.SignatureKey, StringComparison.OrdinalIgnoreCase))
                 return Results.BadRequest(new { error = "Signature tidak valid" });
 
