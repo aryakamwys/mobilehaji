@@ -11,6 +11,7 @@ public class ReferralService(AppDbContext db)
     /// <summary>Hanya buyer yang boleh jadi upline — kode admin tidak dapat diikat (rujukan Store.swift register/bindReferral).</summary>
     public Task<Member?> FindByCodeAsync(string code)
     {
+        if (string.IsNullOrWhiteSpace(code)) return Task.FromResult<Member?>(null); // input kosong → dianggap kode tidak ditemukan
         var normalized = code.Trim().ToUpperInvariant();
         return db.Members.SingleOrDefaultAsync(m => m.Role == "buyer" && m.ReferralCode.ToUpper() == normalized);
     }

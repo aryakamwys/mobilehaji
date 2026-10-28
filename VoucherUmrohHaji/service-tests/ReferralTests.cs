@@ -75,6 +75,9 @@ public class ReferralTests(TestApiFactory factory) : IClassFixture<TestApiFactor
         var tidakAda = await Client(c).PostAsJsonAsync("/api/referral/bind", new { referralCode = "VCH-TIDAKADA" });
         Assert.Equal(HttpStatusCode.BadRequest, tidakAda.StatusCode); // kode tidak dikenal
 
+        var kosong = await Client(c).PostAsJsonAsync("/api/referral/bind", new { referralCode = "" });
+        Assert.Equal(HttpStatusCode.BadRequest, kosong.StatusCode); // kode kosong tetap 400, bukan 500
+
         var admin = factory.CreateClient();
         var login = await admin.PostAsJsonAsync("/api/auth/login", new { email = "admin@haji.local", password = "Admin#2026" });
         var adminAuth = await login.Content.ReadFromJsonAsync<AuthResponse>();
