@@ -77,8 +77,9 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
     setState(() => _membayar = true);
     try {
       // launchUrl balas false (tanpa throw) saat URL tak bisa dibuka.
+      // Wajib Exception (bukan StateError/Error) agar tertangkap handler.
       final ok = await launchUrl(url, mode: LaunchMode.externalApplication);
-      if (!ok) throw StateError('tidak terbuka');
+      if (!ok) throw Exception('Halaman pembayaran tidak terbuka');
     } on Exception {
       if (!mounted) return;
       setState(() => _membayar = false);
