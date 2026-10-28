@@ -16,12 +16,16 @@ public static class MlmCalculator
         for (var i = 0; i < levels.Count; i++)
         {
             var (memberId, downlines) = uplineChain[i];
-            var factor = downlineStep <= 0
-                ? 1m
-                : 1m + Math.Floor((decimal)downlines / downlineStep) * multiplier;
+            var factor = ComputeFactor(downlines, downlineStep, multiplier);
             var amount = (long)Math.Round(orderAmount * levels[i].Percentage / 100m * factor, MidpointRounding.AwayFromZero);
             if (amount != 0) payouts.Add(new Payout(memberId, levels[i].Level, factor, amount));
         }
         return payouts;
     }
+
+    /// <summary>Faktor pengali cashback: 1 + ⌊downlines/step⌋ × multiplier (step &lt;= 0 → 1). Dipakai payout dan pratinjau referral.</summary>
+    public static decimal ComputeFactor(int downlines, int downlineStep, decimal multiplier) =>
+        downlineStep <= 0
+            ? 1m
+            : 1m + Math.Floor((decimal)downlines / downlineStep) * multiplier;
 }

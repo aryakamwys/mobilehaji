@@ -11,6 +11,7 @@ using VoucherUmrohHaji.Service.Features.Orders;
 using VoucherUmrohHaji.Service.Features.Payments;
 using VoucherUmrohHaji.Service.Features.Referrals;
 using VoucherUmrohHaji.Service.Features.Vouchers;
+using VoucherUmrohHaji.Service.Features.Wallet;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +60,8 @@ app.MapAuthEndpoints();
 app.MapVoucherEndpoints();
 app.MapOrderEndpoints();
 app.MapPaymentEndpoints();
+app.MapWalletEndpoints();
+app.MapReferralEndpoints();
 
 using (var scope = app.Services.CreateScope())
     await SeedData.InitializeAsync(scope.ServiceProvider.GetRequiredService<AppDbContext>(), app.Configuration);
