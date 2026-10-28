@@ -6,12 +6,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using VoucherUmrohHaji.Service.Common;
 using VoucherUmrohHaji.Service.Data;
+using VoucherUmrohHaji.Service.Features.Admin;
 using VoucherUmrohHaji.Service.Features.Auth;
 using VoucherUmrohHaji.Service.Features.Orders;
 using VoucherUmrohHaji.Service.Features.Payments;
 using VoucherUmrohHaji.Service.Features.Referrals;
 using VoucherUmrohHaji.Service.Features.Vouchers;
 using VoucherUmrohHaji.Service.Features.Wallet;
+using VoucherUmrohHaji.Service.Features.Withdrawals;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +64,8 @@ app.MapOrderEndpoints();
 app.MapPaymentEndpoints();
 app.MapWalletEndpoints();
 app.MapReferralEndpoints();
+app.MapWithdrawalEndpoints();
+app.MapAdminEndpoints();
 
 using (var scope = app.Services.CreateScope())
     await SeedData.InitializeAsync(scope.ServiceProvider.GetRequiredService<AppDbContext>(), app.Configuration);
