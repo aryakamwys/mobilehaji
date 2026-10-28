@@ -88,6 +88,8 @@ flutter pub get
 flutter run
 ```
 
+Checklist uji end-to-end: docs/e2e-checklist.md
+
 Dokumen OpenAPI tersedia di `/openapi/v1.json` (hanya environment Development).
 
 Webhook Midtrans: di dashboard Midtrans (Settings → Configuration), set Payment Notification URL ke `https://<host-public>/api/webhooks/midtrans`. Untuk dev lokal pakai ngrok/dev tunnel karena Midtrans harus bisa menjangkau mesinmu.
