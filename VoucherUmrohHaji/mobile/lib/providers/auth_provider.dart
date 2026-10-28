@@ -1,9 +1,14 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api_client.dart';
 import '../core/token_storage.dart';
 import '../models/models.dart';
+
+/// Key navigator root — dipasang di MaterialApp (main.dart) agar
+/// logout/sesi habis bisa menutup semua sheet/modal sebelum ke LoginScreen.
+final navigatorKey = GlobalKey<NavigatorState>();
 
 /// Sesi login saat ini. `null` = belum login.
 final authProvider =
@@ -11,7 +16,10 @@ final authProvider =
 
 class AuthController extends Notifier<AsyncValue<Member?>> {
   @override
-  AsyncValue<Member?> build() => AsyncValue.data(TokenStorage.member);
+  AsyncValue<Member?> build() =>
+      // memberJson yang yatim (token sudah hilang) tidak boleh lolos —
+      // shell akan flash sampai 401 pertama.
+      AsyncValue.data(TokenStorage.adaSesi ? TokenStorage.member : null);
 
   Future<void> login(String email, String password) =>
       _autentikasi('/api/auth/login', {
@@ -30,13 +38,22 @@ class AuthController extends Notifier<AsyncValue<Member?>> {
     return _autentikasi('/api/auth/register', body);
   }
 
+  /// Tutup semua route di atas root (sheet checkout/editor, drawer) sebelum
+  /// home bertukar ke LoginScreen — tanpa ini modal yatim menutupi login.
+  void _tutupSemuaModal() =>
+      navigatorKey.currentState?.popUntil((r) => r.isFirst);
+
   Future<void> logout() async {
+    _tutupSemuaModal();
     await TokenStorage.clear();
     state = const AsyncValue.data(null);
   }
 
   /// Sesi dipaksa keluar (refresh token ditolak server).
-  void sesiHabis() => state = const AsyncValue.data(null);
+  void sesiHabis() {
+    _tutupSemuaModal();
+    state = const AsyncValue.data(null);
+  }
 
   /// Tandai parentId terisi setelah bind referral sukses, supaya field
   /// referral di checkout langsung hilang tanpa perlu login ulang.

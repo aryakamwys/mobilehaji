@@ -125,7 +125,10 @@ class _VoucherEditorSheetState extends ConsumerState<VoucherEditorSheet> {
                   labelText: 'Nilai saldo diterima',
                   border: OutlineInputBorder()),
             ),
-            SwitchListTile(
+            // POST tidak punya field isActive (backend default aktif) —
+            // switch hanya relevan saat edit voucher yang sudah ada.
+            if (widget.voucher != null)
+              SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Aktif'),
               value: _aktif,

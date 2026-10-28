@@ -23,7 +23,8 @@ class ShopScreen extends ConsumerWidget {
     // selama masih loading pakai saldo member terakhir sebagai fallback.
     final saldo = wallet.value?.balance ?? member?.balance ?? 0;
     return RefreshIndicator(
-      onRefresh: () async => ref.refresh(vouchersProvider.future),
+      onRefresh: () => Future.wait(
+          [ref.refresh(walletProvider.future), ref.refresh(vouchersProvider.future)]),
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [

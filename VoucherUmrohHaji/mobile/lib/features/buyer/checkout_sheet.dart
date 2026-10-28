@@ -57,6 +57,8 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
         // Referral wajib diikat DULU — kalau gagal, order tidak dibuat.
         await bindReferral(kode);
         ref.read(authProvider.notifier).tandaiUplineTerikat();
+        // Tab Referal (IndexedStack, tetap mounted) harus tahu upline terikat.
+        ref.invalidate(referralMeProvider);
       }
       final order = await buatOrder(widget.voucher);
       ref.invalidate(myOrdersProvider);

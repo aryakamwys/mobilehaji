@@ -36,6 +36,7 @@ class VoucherApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF127A6B)),
       ),
+      navigatorKey: navigatorKey,
       home: const _Gerbang(),
     );
   }

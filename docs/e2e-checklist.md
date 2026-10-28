@@ -36,7 +36,7 @@ Admin web (opsional): `cd web && npm run dev` → http://localhost:5173
 ## 2. Registrasi & Login Buyer
 
 - [ ] Register buyer A **tanpa** kode referral → otomatis masuk, 4 tab buyer
-      tampil (Belanja, Dompet, Referal, Profil)
+      tampil (Top-Up, Dompet, Referal, Withdraw)
 - [ ] Register buyer B **pakai kode referral A** → masuk; layar Referal B
       menampilkan `uplineName` = nama A
 - [ ] Login ulang sebagai A → jumlah jaringan (downline) A bertambah 1
@@ -45,7 +45,7 @@ Admin web (opsional): `cd web && npm run dev` → http://localhost:5173
 ## 3. Admin
 
 - [ ] Login admin (web localhost:5173 ATAU akun admin di Flutter) → Panel
-      Admin tampil dengan 4 tab (Voucher, Konfigurasi, Approval, Anggota)
+      Admin tampil dengan 4 tab (Voucher, Komisi, Approval, Anggota)
 - [ ] Tambah voucher baru → muncul di katalog buyer
 - [ ] Edit voucher (judul/harga/nilai) → perubahan tercermin di katalog buyer
 - [ ] Nonaktifkan voucher → hilang dari katalog buyer; aktifkan lagi → muncul

@@ -19,6 +19,9 @@ Voucher get _voucher => Voucher(
     id: 'v1', title: 'Voucher Gold 500K', price: 500000, value: 525000, isActive: true);
 
 Future<void> _pump(WidgetTester tester) async {
+  // authProvider.build() hanya memakai member bila token ada (guard sesi).
+  TokenStorage.accessToken = 'token';
+  TokenStorage.refreshToken = 'token';
   await tester.pumpWidget(ProviderScope(child: MaterialApp(
     home: Scaffold(
       body: CheckoutSheet(voucher: _voucher),
@@ -28,7 +31,11 @@ Future<void> _pump(WidgetTester tester) async {
 }
 
 void main() {
-  tearDown(() => TokenStorage.member = null);
+  tearDown(() {
+    TokenStorage.accessToken = null;
+    TokenStorage.refreshToken = null;
+    TokenStorage.member = null;
+  });
 
   testWidgets(
       'Field kode referral tampil saat parentId masih null (belum punya upline)',
