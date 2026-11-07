@@ -1,0 +1,27 @@
+# Override produksi untuk VPS. Jalankan dari folder ini:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+#
+# Tambahkan ke .env di VPS (lihat .env.example):
+#   DB_PASSWORD=<password kuat>  MIDTRANS_IS_PRODUCTION=true  CORS_ORIGINS=https://admin.domain.com
+#
+# CATATAN:
+# - Password DB hanya dipakai saat volume pgdata PERTAMA kali dibuat. Kalau di VPS
+#   pernah jalan compose dev dulu, hapus dulu volumenya (docker compose down -v).
+# - Tidak ada TLS di sini. Arahkan reverse proxy (Caddy/Nginx/Caddy di host) dengan
+#   HTTPS ke port host ${API_PORT:-5038} — Midtrans notification butuh URL publik HTTPS.
+#   Di dashboard Midtrans (Production) set Payment Notification URL ke
+#   https://api.domain-anda.com/api/webhooks/midtrans
+services:
+  db:
+    environment:
+      POSTGRES_PASSWORD: "${DB_PASSWORD:?set DB_PASSWORD di .env}"
+    restart: unless-stopped
+
+  api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Default: "Host=db;Port=5432;Database=voucher;Username=postgres;Password=${DB_PASSWORD:?set DB_PASSWORD di .env}"
+      Midtrans__IsProduction: "${MIDTRANS_IS_PRODUCTION:-false}"
+      # Kosong = tanpa CORS (app mobile tidak butuh). Set kalau admin web dipakai.
+      Cors__Origins: "${CORS_ORIGINS:-}"
+    restart: unless-stopped
